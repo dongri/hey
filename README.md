@@ -3,7 +3,7 @@
 HTTP health checker.
 
 ### Edit Servers.toml
-```
+```sh
 $ vim Servers.toml
 
 [[servers]]
@@ -24,14 +24,14 @@ slack_channel_log = "production-log"
 ```
 
 ### Run on docker-compose
-```
+```sh
 $ vim Servers.toml
 
 $ docker-compose up --build -d
 ```
 
 ### Run on Linux
-```
+```sh
 $ vim Servers.toml
 
 $ ./run.sh
