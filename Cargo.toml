@@ -1,0 +1,16 @@
+[package]
+name = "hey"
+version = "0.1.0"
+authors = ["Dongri Jin <dongrify@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "1.0.104", features = ["derive"] }
+toml = "0.5.5"
+reqwest = "0.10.6"
+tokio = { version = "0.2", features = ["full"] }
+slack-hook = "0.8.0"
+futures = "0.3.5"
+async-std = "1.5.0"
