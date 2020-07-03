@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  hey:
+    container_name: hey
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/source
