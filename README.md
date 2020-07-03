@@ -3,7 +3,7 @@
 HTTP health checker.
 
 ### Edit Servers.toml
-```yaml
+```toml
 $ vim Servers.toml
 
 [[servers]]
