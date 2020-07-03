@@ -4,8 +4,6 @@ HTTP health checker.
 
 ### Edit Servers.toml
 ```toml
-$ vim Servers.toml
-
 [[servers]]
 name = "staing api"
 url = "https://api.staging.example.com/status"
