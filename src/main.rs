@@ -31,12 +31,12 @@ struct Servers {
 async fn main() {
     loop {
         task::sleep(Duration::from_secs(60)).await;
-        let future = async_request();
+        let future = watcher();
         block_on(future);
     }
 }
 
-async fn check(server: Server) {
+async fn status(server: Server) {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
         .build()
@@ -56,7 +56,7 @@ async fn check(server: Server) {
     };
 }
 
-async fn async_request() {
+async fn watcher() {
     let server_toml: String = fs::read_to_string("Servers.toml").unwrap();
     let servers: Result<Servers, toml::de::Error> = toml::from_str(&server_toml);
 
@@ -64,7 +64,7 @@ async fn async_request() {
         Ok(p) => {
             let mut tasks = Vec::new();
             for server in p.servers {
-                let task = check(server);
+                let task = status(server);
                 tasks.push(task);
             }
             futures::future::join_all(tasks).await;
