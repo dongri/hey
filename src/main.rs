@@ -25,16 +25,26 @@ struct Server {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct Servers {
+struct Config {
+    interval: u64,
     servers: Vec<Server>
 }
 
 #[tokio::main]
 async fn main() {
-    loop {
-        task::sleep(Duration::from_secs(60)).await;
-        let future = watcher();
-        block_on(future);
+    let server_toml: String = fs::read_to_string("Config.toml").unwrap();
+    let config: Result<Config, toml::de::Error> = toml::from_str(&server_toml);
+    match config {
+        Ok(c) => {
+            loop {
+                let interval = c.interval;
+                let config = c.to_owned();
+                task::sleep(Duration::from_secs(interval)).await;
+                let future = watcher(config);
+                block_on(future);
+            }
+        }
+        Err(e) => panic!("Filed to parse TOML: {}", e),
     }
 }
 
@@ -60,22 +70,13 @@ async fn status(server: Server) {
     };
 }
 
-async fn watcher() {
-    let server_toml: String = fs::read_to_string("Servers.toml").unwrap();
-    let servers: Result<Servers, toml::de::Error> = toml::from_str(&server_toml);
-
-    match servers {
-        Ok(p) => {
-            let mut tasks = Vec::new();
-            for server in p.servers {
-                let task = status(server);
-                tasks.push(task);
-            }
-            futures::future::join_all(tasks).await;
-        }
-        Err(e) => panic!("Filed to parse TOML: {}", e),
+async fn watcher(c: Config) {
+    let mut tasks = Vec::new();
+    for server in c.servers {
+        let task = status(server);
+        tasks.push(task);
     }
-
+    futures::future::join_all(tasks).await;
 }
 
 fn string_to_static_str(s: String) -> &'static str {

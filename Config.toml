@@ -1,3 +1,5 @@
+interval = 600
+
 [[servers]]
 name = "staing api"
 url = "https://api.staging.example.com/status"
