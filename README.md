@@ -3,9 +3,7 @@
 HTTP health checker.
 
 ### Edit Servers.toml
-```
-$ vim Servers.toml
-
+```toml
 [[servers]]
 name = "staing api"
 url = "https://api.staging.example.com/status"
@@ -24,14 +22,14 @@ slack_channel_log = "production-log"
 ```
 
 ### Run on docker-compose
-```
+```sh
 $ vim Servers.toml
 
 $ docker-compose up --build -d
 ```
 
 ### Run on Linux
-```
+```sh
 $ vim Servers.toml
 
 $ ./run.sh
