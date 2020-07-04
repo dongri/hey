@@ -12,6 +12,8 @@ use async_std::task;
 
 use reqwest::StatusCode;
 
+use chrono::{Local, DateTime};
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Server {
     name: String,
@@ -44,14 +46,16 @@ async fn status(server: Server) {
 
     let target_server = server.to_owned();
 
+    let local_datetime: DateTime<Local> = Local::now();
+
     let res = client.get(&target_server.url).send().await.unwrap();
     let status_code = res.status();
     let ok = StatusCode::from_u16(target_server.status_code).unwrap();
     if status_code == ok {
-        let text = format!("{}: {}\nStatus: {}", target_server.name, target_server.url, ok);
+        let text = format!("```\n{}: {}\nStatus: {}\n{}\n``", target_server.name, target_server.url, ok, local_datetime);
         notify_to_slack(target_server.slack_channel_log, target_server.slack_webhook, text.to_string());
     } else {
-        let text = format!("@channel\n{}: {}\nStatus: {}", target_server.name, target_server.url, status_code);
+        let text = format!("@channel\n```\n{}: {}\nStatus: {}\n{}\n```", target_server.name, target_server.url, status_code, local_datetime);
         notify_to_slack(target_server.slack_channel_alert, target_server.slack_webhook, text.to_string())
     };
 }
