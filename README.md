@@ -2,8 +2,10 @@
 
 HTTP health checker.
 
-### Edit Servers.toml
+### Edit Config.toml
 ```toml
+interval = 600
+
 [[servers]]
 name = "staing api"
 url = "https://api.staging.example.com/status"
@@ -23,14 +25,14 @@ slack_channel_log = "production-log"
 
 ### Run on docker-compose
 ```sh
-$ vim Servers.toml
+$ vim Config.toml
 
 $ docker-compose up --build -d
 ```
 
 ### Run on Linux
 ```sh
-$ vim Servers.toml
+$ vim Config.toml
 
 $ ./run.sh
 ```
