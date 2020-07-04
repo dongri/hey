@@ -3,6 +3,7 @@ interval = 600
 [[servers]]
 name = "staing api"
 url = "https://api.staging.example.com/status"
+timeout = 10
 status_code = 200
 slack_webhook = "https://hooks.slack.com/services/***/***"
 slack_channel_alert = "staging-alert"
@@ -11,6 +12,7 @@ slack_channel_log = "staging-log"
 [[servers]]
 name = "production api"
 url = "https://api.example.com/status"
+timeout = 20
 status_code = 200
 slack_webhook = "https://hooks.slack.com/services/***/***"
 slack_channel_alert = "production-alert"

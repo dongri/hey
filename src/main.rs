@@ -18,6 +18,7 @@ use chrono::{Local, DateTime};
 struct Server {
     name: String,
     url: String,
+    timeout: u64,
     status_code: u16,
     slack_webhook: String,
     slack_channel_alert: String,
@@ -50,7 +51,7 @@ async fn main() {
 
 async fn status(server: Server) {
     let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(server.timeout))
         .build()
         .unwrap();
 
