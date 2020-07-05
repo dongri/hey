@@ -49,7 +49,20 @@ async fn main() {
     }
 }
 
-async fn status(server: Server) {
+async fn watch_task(server: Server) {
+    let local_datetime: DateTime<Local> = Local::now();
+    let target_server = server.to_owned();
+    let result = server_status(server, local_datetime).await;
+    match result {
+        Ok(()) => {},
+        Err(e) => {
+            let text = make_message(false, target_server.to_owned(), format!("{:?}", e), local_datetime);
+            notify_to_slack(target_server.slack_channel_alert, target_server.slack_webhook, text.to_string());
+        }
+    }
+}
+
+async fn server_status(server: Server, local_datetime: DateTime<Local>) -> Result<(), reqwest::Error> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(server.timeout))
         .build()
@@ -57,24 +70,23 @@ async fn status(server: Server) {
 
     let target_server = server.to_owned();
 
-    let local_datetime: DateTime<Local> = Local::now();
-
-    let res = client.get(&target_server.url).send().await.unwrap();
+    let res = client.get(&target_server.url).send().await?;
     let status_code = res.status();
     let ok = StatusCode::from_u16(target_server.status_code).unwrap();
     if status_code == ok {
-        let text = format!("```\n{}: {}\nStatus: {}\n{}\n```", target_server.name, target_server.url, ok, local_datetime);
+        let text = make_message(true, target_server.to_owned(), format!("{}", ok), local_datetime);
         notify_to_slack(target_server.slack_channel_log, target_server.slack_webhook, text.to_string());
     } else {
-        let text = format!("@channel\n```\n{}: {}\nStatus: {}\n{}\n```", target_server.name, target_server.url, status_code, local_datetime);
+        let text = make_message(false, target_server.to_owned(), format!("{}", status_code), local_datetime);
         notify_to_slack(target_server.slack_channel_alert, target_server.slack_webhook, text.to_string())
     };
+    Ok(())
 }
 
 async fn watcher(c: Config) {
     let mut tasks = Vec::new();
     for server in c.servers {
-        let task = status(server);
+        let task = watch_task(server);
         tasks.push(task);
     }
     futures::future::join_all(tasks).await;
@@ -82,6 +94,15 @@ async fn watcher(c: Config) {
 
 fn string_to_static_str(s: String) -> &'static str {
     Box::leak(s.into_boxed_str())
+}
+
+fn make_message(is_ok: bool, server: Server, status: String, local_datetime: DateTime<Local>) -> String {
+    let mut at_channel: String = String::from("");
+    if !is_ok {
+        at_channel = String::from("@channel\n");
+    }
+    let text = format!("{}```\n{}: {}\nStatus: {}\n{}\n```", at_channel, server.name, server.url, status, local_datetime);
+    text
 }
 
 fn notify_to_slack(channel: String, slack_webhook: String, text: String) {
