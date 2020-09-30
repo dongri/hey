@@ -37,27 +37,26 @@ async fn main() {
     let config: Result<Config, toml::de::Error> = toml::from_str(&server_toml);
     match config {
         Ok(c) => {
-            loop {
-                let interval = c.interval;
-                let config = c.to_owned();
-                task::sleep(Duration::from_secs(interval)).await;
-                let future = watcher(config);
-                block_on(future);
-            }
+            let config = c.to_owned();
+            let future = watcher(config);
+            block_on(future);
         }
         Err(e) => panic!("Filed to parse TOML: {}", e),
     }
 }
 
-async fn watch_task(server: Server) {
-    let local_datetime: DateTime<Local> = Local::now();
-    let target_server = server.to_owned();
-    let result = server_status(server, local_datetime).await;
-    match result {
-        Ok(()) => {},
-        Err(e) => {
-            let text = make_message(false, target_server.to_owned(), format!("{:?}", e), local_datetime);
-            notify_to_slack(target_server.slack_channel_alert, target_server.slack_webhook, text.to_string());
+async fn watch_task(interval: u64, server: Server) {
+    loop {
+        task::sleep(Duration::from_secs(interval)).await;
+        let local_datetime: DateTime<Local> = Local::now();
+        let result = server_status(server.to_owned(), local_datetime).await;
+        match result {
+            Ok(()) => {},
+            Err(e) => {
+                let target_server = server.to_owned();
+                let text = make_message(false, target_server.to_owned(), format!("{:?}", e), local_datetime);
+                notify_to_slack(target_server.slack_channel_alert, target_server.slack_webhook, text.to_string());
+            }
         }
     }
 }
@@ -86,7 +85,7 @@ async fn server_status(server: Server, local_datetime: DateTime<Local>) -> Resul
 async fn watcher(c: Config) {
     let mut tasks = Vec::new();
     for server in c.servers {
-        let task = watch_task(server);
+        let task = watch_task(c.interval, server);
         tasks.push(task);
     }
     futures::future::join_all(tasks).await;
