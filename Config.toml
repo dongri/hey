@@ -1,19 +1,46 @@
-interval = 600
+interval = 20
 
 [[servers]]
-name = "staing api"
-url = "https://api.staging.example.com/status"
+name = "Production: rails api"
+url = "https://rails.go-wallet.io/api/app_version.json?app_id=1"
 timeout = 10
 status_code = 200
-slack_webhook = "https://hooks.slack.com/services/***/***"
-slack_channel_alert = "staging-alert"
-slack_channel_log = "staging-log"
+slack_webhook = "https://hooks.slack.com/services/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"
+slack_channel_alert = "monitor-death"
+slack_channel_log = "monitor-alive"
 
 [[servers]]
-name = "production api"
-url = "https://api.example.com/status"
-timeout = 20
+name = "Production: node api"
+url = "https://api.go-wallet.io/transactions?address=0x7e162d3e95e964d9839e419b2f79b4200a98c407"
+timeout = 10
 status_code = 200
-slack_webhook = "https://hooks.slack.com/services/***/***"
-slack_channel_alert = "production-alert"
-slack_channel_log = "production-log"
+slack_webhook = "https://hooks.slack.com/services/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"
+slack_channel_alert = "monitor-death"
+slack_channel_log = "monitor-alive"
+
+[[servers]]
+name = "Production: gobase developer"
+url = "https://developer.gobase.io/status"
+timeout = 10
+status_code = 200
+slack_webhook = "https://hooks.slack.com/services/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"
+slack_channel_alert = "monitor-death"
+slack_channel_log = "monitor-alive"
+
+[[servers]]
+name = "Production: gobase api"
+url = "https://api.gobase.io/status"
+timeout = 10
+status_code = 200
+slack_webhook = "https://hooks.slack.com/services/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"
+slack_channel_alert = "monitor-death"
+slack_channel_log = "monitor-alive"
+
+[[servers]]
+name = "Production: internal-nft"
+url = "https://internalnft.gobase.io/"
+timeout = 10
+status_code = 200
+slack_webhook = "https://hooks.slack.com/services/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"
+slack_channel_alert = "monitor-death"
+slack_channel_log = "monitor-alive"

@@ -11,6 +11,7 @@ use futures::executor::block_on;
 use async_std::task;
 
 use reqwest::StatusCode;
+use reqwest::ClientBuilder;
 
 use chrono::{Local, DateTime};
 
@@ -37,47 +38,40 @@ async fn main() {
     let config: Result<Config, toml::de::Error> = toml::from_str(&server_toml);
     match config {
         Ok(c) => {
-            let config = c.to_owned();
-            let future = watcher(config);
-            block_on(future);
+            loop {
+                task::sleep(Duration::from_secs(c.interval)).await;                
+                let config = c.to_owned();
+                let future = watcher(config);
+                block_on(future);
+            }
         }
         Err(e) => panic!("Filed to parse TOML: {}", e),
     }
 }
 
-async fn watch_task(interval: u64, server: Server) {
-    loop {
-        task::sleep(Duration::from_secs(interval)).await;
-        let local_datetime: DateTime<Local> = Local::now();
-        let result = server_status(server.to_owned(), local_datetime).await;
-        match result {
-            Ok(()) => {},
-            Err(e) => {
-                let target_server = server.to_owned();
-                let text = make_message(false, target_server.to_owned(), format!("{:?}", e), local_datetime);
-                notify_to_slack(target_server.slack_channel_alert, target_server.slack_webhook, text.to_string());
-            }
+async fn watch_task(server: Server) {
+    let local_datetime: DateTime<Local> = Local::now();
+    let result = server_status(&server, local_datetime).await;
+    match result {
+        Ok(()) => {},
+        Err(e) => {
+            let text = make_message(false, &server, format!("{:?}", e), local_datetime);
+            notify_to_slack(&server.slack_channel_alert, &server.slack_webhook, text);
         }
     }
 }
 
-async fn server_status(server: Server, local_datetime: DateTime<Local>) -> Result<(), reqwest::Error> {
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(server.timeout))
-        .build()
-        .unwrap();
-
-    let target_server = server.to_owned();
-
-    let res = client.get(&target_server.url).send().await?;
+async fn server_status(server: &Server, local_datetime: DateTime<Local>) -> Result<(), reqwest::Error> {
+    let client = ClientBuilder::new().timeout(Duration::from_secs(server.timeout)).build()?;
+    let res = client.get(&server.url).send().await?;
     let status_code = res.status();
-    let ok = StatusCode::from_u16(target_server.status_code).unwrap();
+    let ok = StatusCode::from_u16(server.status_code).unwrap();
     if status_code == ok {
-        let text = make_message(true, target_server.to_owned(), format!("{}", ok), local_datetime);
-        notify_to_slack(target_server.slack_channel_log, target_server.slack_webhook, text.to_string());
+        let text = make_message(true, server, format!("{}", ok), local_datetime);
+        notify_to_slack(&server.slack_channel_log, &server.slack_webhook, text);
     } else {
-        let text = make_message(false, target_server.to_owned(), format!("{}", status_code), local_datetime);
-        notify_to_slack(target_server.slack_channel_alert, target_server.slack_webhook, text.to_string())
+        let text = make_message(false, server, format!("{}", status_code), local_datetime);
+        notify_to_slack(&server.slack_channel_alert, &server.slack_webhook, text)
     };
     Ok(())
 }
@@ -85,7 +79,7 @@ async fn server_status(server: Server, local_datetime: DateTime<Local>) -> Resul
 async fn watcher(c: Config) {
     let mut tasks = Vec::new();
     for server in c.servers {
-        let task = watch_task(c.interval, server);
+        let task = watch_task(server);
         tasks.push(task);
     }
     futures::future::join_all(tasks).await;
@@ -95,7 +89,7 @@ fn string_to_static_str(s: String) -> &'static str {
     Box::leak(s.into_boxed_str())
 }
 
-fn make_message(is_ok: bool, server: Server, status: String, local_datetime: DateTime<Local>) -> String {
+fn make_message(is_ok: bool, server: &Server, status: String, local_datetime: DateTime<Local>) -> String {
     let mut at_channel: String = String::from("");
     if !is_ok {
         at_channel = String::from("@channel\n");
@@ -104,8 +98,8 @@ fn make_message(is_ok: bool, server: Server, status: String, local_datetime: Dat
     text
 }
 
-fn notify_to_slack(channel: String, slack_webhook: String, text: String) {
-    let slack = Slack::new(string_to_static_str(slack_webhook)).unwrap();
+fn notify_to_slack(channel: &String, slack_webhook: &String, text: String) {
+    let slack = Slack::new(string_to_static_str(slack_webhook.to_string())).unwrap();
     let pb = PayloadBuilder::new()
         .text(text)
         .channel(channel)
