@@ -9,6 +9,8 @@ interval = 600
 [[servers]]
 name = "staing api"
 url = "https://api.staging.example.com/status"
+timeout = 20
+method = "GET"
 status_code = 200
 slack_webhook = "https://hooks.slack.com/services/***/***"
 slack_channel_alert = "staging-alert"
@@ -17,6 +19,8 @@ slack_channel_log = "staging-log"
 [[servers]]
 name = "production api"
 url = "https://api.example.com/status"
+timeout = 20
+method = "GET"
 status_code = 200
 slack_webhook = "https://hooks.slack.com/services/***/***"
 slack_channel_alert = "production-alert"
@@ -43,5 +47,5 @@ $ ./run.sh
 
 
 # Roadmap
-- [ ] Supoort POST method
+- [x] Supoort POST method
 - [ ] Suppoert basic auth
